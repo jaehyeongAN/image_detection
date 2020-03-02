@@ -10,6 +10,9 @@ from keras.layers import Activation, Dropout, Flatten, Dense
 import numpy as np
 import os
 
+np_load_old = np.load
+np.load = lambda *a: np_load_old(*a, allow_pickle=True)
+
 # 카테고리 지정하기
 categories = ["Car front crash","Car side crash","Rear and crash","Car broken windshield","Car scratch","Flat tire","Overturned vehicle"]
 nb_classes = len(categories)
@@ -46,7 +49,7 @@ model.add(Dropout(0.5))
 model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 # 모델 구축하기
-model.compile(loss='binary_crossentropy',   # 최적화 함수 지정
+model.compile(loss='categorical_crossentropy',   # 최적화 함수 지정
     optimizer='rmsprop',
     metrics=['accuracy'])
 # 모델 확인
@@ -61,7 +64,7 @@ if os.path.exists(hdf5_file):
     model.load_weights(hdf5_file)
 else:
     # 학습한 모델이 없으면 파일로 저장
-    model.fit(X_train, y_train, batch_size=32, nb_epoch=10)
+    model.fit(X_train, y_train, batch_size=32, epoch=10)
     model.save_weights(hdf5_file)
 # 모델 평가하기 
 score = model.evaluate(X_test, y_test)
@@ -70,10 +73,10 @@ print('accuracy=', score[1])    # acc
 
 # 예측 값 보기
 y_pred = model.predict(X_test)
-print(y_pred)
+
 # 예측 클래스
 a =[np.argmax(value) for value in  y_pred]
-print(a)
+# print(a)
 
 
 
@@ -84,7 +87,7 @@ print('-------------------------------------')
 from PIL import Image
 
 # 적용해볼 이미지 
-test_image = './image/brokenwindow.jpg'
+test_image = './image/car_front_crash_img.jfif'
 # 이미지 resize
 img = Image.open(test_image)
 img = img.convert("RGB")
@@ -94,7 +97,7 @@ X = np.array(data)
 X = X.astype("float") / 256
 X = X.reshape(-1, 64, 64,3)
 # 예측
-pred = model.predict(X)  
+pred = model.predict(X)
 result = [np.argmax(value) for value in pred]   # 예측 값중 가장 높은 클래스 반환
 print('New data category : ',categories[result[0]])
 #######################################
